@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정지안 | Performance Marketer</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+:root {
+  --blue:    #4285f4;
+  --blue-lt: #EAF1FE;
+  --blue-dk: #2563c4;
+  --ink:     #111111;
+  --ink2:    #333333;
+  --muted:   #888888;
+  --border:  #E8E8E8;
+  --bg:      #F7F7F7;
+  --white:   #FFFFFF;
+  --imsg-bg: #E9E9EB;
+  --imsg-blue: #4285f4;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:'Pretendard',-apple-system,sans-serif; background:var(--white); color:var(--ink); line-height:1.7; cursor:none; }
+a, button { cursor:none; }
+
+/* ── CURSOR ── */
+.cursor { width:8px; height:8px; background:var(--blue); border-radius:50%; position:fixed; top:0; left:0; pointer-events:none; z-index:9999; }
+.cursor-ring { width:30px; height:30px; border:1.5px solid var(--blue); border-radius:50%; position:fixed; top:0; left:0; pointer-events:none; z-index:9998; opacity:0.4; transition:width .2s,height .2s; }
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; height:60px;
+  padding:0 48px; display:flex; justify-content:space-between; align-items:center;
+  background:rgba(255,255,255,0.92); backdrop-filter:blur(16px);
+  border-bottom:1px solid transparent; z-index:100; transition:border-color .3s;
+}
+nav.scrolled { border-color:var(--border); }
+.nav-name { font-size:15px; font-weight:700; color:var(--ink); }
+.nav-name span { color:var(--blue); }
+.nav-links { display:flex; gap:28px; }
+.nav-links a { font-size:13px; color:var(--muted); text-decoration:none; transition:color .2s; }
+.nav-links a:hover { color:var(--ink); }
+
+/* ══ HERO 1 — FULLSCREEN TYPO ══════════════════════════════ */
+#hero-typo {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 100px 10vw 80px;
+  background: var(--white);
+  position: relative; overflow: hidden;
+}
+#hero-typo::before {
+  content:'';
+  position:absolute; inset:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:48px 48px; opacity:0.3;
+  pointer-events:none;
+}
+.typo-eyebrow {
+  font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--blue); font-weight:600; margin-bottom:20px;
+  opacity:0; animation:fadeUp 0.6s 0.1s forwards;
+  position:relative; z-index:1;
+}
+.typo-headline {
+  font-size: clamp(40px, 7vw, 96px);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  margin-bottom: 32px;
+  opacity:0; animation:fadeUp 0.6s 0.2s forwards;
+  position:relative; z-index:1;
+}
+.typo-headline .break { display:block; }
+.typo-headline .accent { color:var(--blue); }
+.typo-sub {
+  font-size: clamp(15px, 1.8vw, 20px);
+  color: var(--muted);
+  font-weight: 400;
+  line-height: 1.6;
+  max-width: 520px;
+  margin-bottom: 48px;
+  opacity:0; animation:fadeUp 0.6s 0.35s forwards;
+  position:relative; z-index:1;
+}
+.typo-sub strong { color:var(--ink2); font-weight:500; }
+.typo-stats {
+  display:flex; gap:0; flex-wrap:wrap;
+  max-width:560px;
+  border:1px solid var(--border); border-radius:8px; overflow:hidden;
+  opacity:0; animation:fadeUp 0.6s 0.45s forwards;
+  position:relative; z-index:1;
+}
+.typo-stat { flex:1; min-width:110px; padding:18px 20px; border-right:1px solid var(--border); background:var(--white); }
+.typo-stat:last-child { border-right:none; }
+.typo-stat-num { font-size:26px; font-weight:800; color:var(--ink); letter-spacing:-0.03em; line-height:1; margin-bottom:3px; }
+.typo-stat-num span { color:var(--blue); }
+.typo-stat-label { font-size:11px; color:var(--muted); }
+.scroll-hint {
+  position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  opacity:0; animation:fadeUp 0.5s 1.2s forwards;
+  z-index:1;
+}
+.scroll-hint span { font-size:11px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+.scroll-hint-arrow { animation:arrowBounce 1.5s infinite; font-size:16px; color:var(--muted); }
+@keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+/* ══ HERO 2 — iMESSAGE ══════════════════════════════════════ */
+#hero-imsg {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px;
+  background: var(--bg);
+  position:relative;
+}
+/* Mac window */
+.mac-window {
+  width:100%; max-width:440px;
+  background:#fff;
+  border-radius:16px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+  overflow:hidden;
+}
+/* Title bar */
+.mac-titlebar {
+  background:#F0F0F0;
+  padding:12px 16px;
+  display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid #E0E0E0;
+}
+.mac-dots { display:flex; gap:6px; }
+.mac-dot { width:12px; height:12px; border-radius:50%; }
+.mac-dot.red{background:#FF5F57} .mac-dot.yellow{background:#FEBC2E} .mac-dot.green{background:#28C840}
+.mac-title-info { flex:1; text-align:center; }
+.mac-contact-name { font-size:13px; font-weight:600; color:var(--ink); }
+.mac-contact-sub  { font-size:11px; color:var(--muted); }
+.mac-avatar {
+  width:34px; height:34px; border-radius:50%;
+  background:var(--blue-lt);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; color:var(--blue);
+  overflow:hidden; flex-shrink:0;
+}
+.mac-avatar img { width:100%; height:100%; object-fit:cover; object-position:center top; }
+/* Chat area */
+.chat-area {
+  padding:20px 16px 12px;
+  min-height:280px;
+  background:#fff;
+  display:flex; flex-direction:column; gap:6px;
+}
+.chat-date { text-align:center; font-size:11px; color:var(--muted); margin-bottom:8px; }
+/* Bubbles — right only (outgoing) */
+.bubble-row { display:flex; justify-content:flex-end; }
+.bubble {
+  max-width:78%;
+  padding:10px 15px;
+  border-radius:18px;
+  border-bottom-right-radius:4px;
+  font-size:14px; line-height:1.55;
+  background:#4285f4;
+  color:#fff;
+  opacity:0; transform:translateY(10px) scale(0.96);
+  transition:opacity 0.35s ease, transform 0.35s cubic-bezier(.34,1.2,.64,1);
+}
+.bubble.visible { opacity:1; transform:none; }
+/* typing */
+.bubble-row.typing-row { justify-content:flex-end; display:none; }
+.typing-bubble {
+  background:#4285f4; border-radius:18px; border-bottom-right-radius:4px;
+  padding:12px 16px;
+  display:flex; align-items:center; gap:4px; width:58px;
+}
+.dot-b { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.7); animation:bounce 1.2s infinite; }
+.dot-b:nth-child(2){animation-delay:.2s} .dot-b:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+/* input bar */
+.chat-input-bar { padding:10px 12px; border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; background:#fff; }
+.chat-input-fake { flex:1; background:#E9E9EB; border-radius:20px; padding:8px 14px; font-size:13px; color:var(--muted); }
+.chat-send-btn { width:30px; height:30px; border-radius:50%; background:var(--blue); display:flex; align-items:center; justify-content:center; border:none; }
+.chat-send-btn svg { width:14px; height:14px; fill:#fff; }
+
+/* scroll down from imsg */
+.imsg-scroll-hint {
+  position:absolute; bottom:32px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  opacity:0; transition:opacity 0.5s;
+}
+.imsg-scroll-hint.show { opacity:1; }
+.imsg-scroll-hint span { font-size:11px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+.ish-arrow { animation:arrowBounce 1.5s infinite; font-size:16px; color:var(--muted); }
+
+/* ══ SECTION COMMON ══════════════════════════════════════════ */
+/* ══ SECTION COMMON ══════════════════════════════════════════ */
+.section-wrap { padding:96px 10vw; }
+.section-wrap.bg-gray { background:var(--bg); }
+.section-wrap.bg-dark { background:var(--ink); }
+
+.section-kicker { font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--blue); font-weight:600; margin-bottom:10px; }
+.section-title { font-size:clamp(24px,3.5vw,40px); font-weight:800; color:var(--ink); letter-spacing:-0.03em; line-height:1.2; margin-bottom:8px; }
+.section-title.light { color:var(--white); }
+.section-desc { font-size:14px; color:var(--muted); }
+.section-desc.light { color:rgba(255,255,255,0.45); }
+.section-top { margin-bottom:48px; }
+
+/* ══ CASES ══════════════════════════════════════════════════ */
+.cases-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+
+.case-card {
+  background:var(--white); border:1px solid var(--border); border-radius:10px;
+  padding:28px; cursor:pointer; position:relative; overflow:hidden;
+  transition:box-shadow .25s, transform .25s, border-color .25s;
+}
+.case-card:hover { box-shadow:0 8px 40px rgba(66,133,244,.12); transform:translateY(-3px); border-color:var(--blue); }
+.case-card::after { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--blue); transform:scaleX(0); transform-origin:left; transition:transform .3s; }
+.case-card:hover::after { transform:scaleX(1); }
+
+.case-tag { display:inline-block; font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:3px 9px; border-radius:4px; margin-bottom:14px; }
+.t-beauty { background:var(--blue-lt); color:var(--blue); }
+.t-data   { background:#EDF5FF; color:#2563c4; }
+.t-create { background:#FFF3E8; color:#C25A1A; }
+.t-infra  { background:#F0FAF0; color:#1A7A3A; }
+.t-org    { background:#F5F0FF; color:#5A2AC2; }
+
+.case-num { font-size:11px; color:var(--muted); position:absolute; top:28px; right:28px; }
+.case-title { font-size:16px; font-weight:800; line-height:1.35; margin-bottom:8px; letter-spacing:-0.02em; }
+.case-sub { font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:18px; }
+.case-result { font-size:32px; font-weight:800; color:var(--blue); letter-spacing:-0.03em; line-height:1; }
+.case-result-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+.case-more { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:var(--blue); margin-top:16px; opacity:0; transform:translateX(-6px); transition:opacity .2s, transform .2s; }
+.case-card:hover .case-more { opacity:1; transform:none; }
+
+/* ══ ABOUT ══════════════════════════════════════════════════ */
+.about-grid { display:grid; grid-template-columns:1fr 1fr; gap:72px; align-items:start; }
+.about-body { font-size:15px; color:var(--ink2); line-height:1.8; margin-bottom:16px; }
+.career-list { margin-top:36px; }
+.career-item { display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--border); }
+.c-dot { width:8px; height:8px; border-radius:50%; background:var(--blue); margin-top:5px; flex-shrink:0; }
+.c-dot.dim { background:var(--border); }
+.c-co { font-weight:700; font-size:14px; }
+.c-role { font-size:13px; color:var(--muted); margin-top:1px; }
+.c-period { font-size:12px; color:var(--muted); margin-top:2px; }
+
+.strength-list { display:flex; flex-direction:column; gap:12px; }
+.strength-item { padding:22px 24px; background:var(--white); border:1px solid var(--border); border-radius:8px; border-left:3px solid var(--blue); transition:box-shadow .2s; }
+.strength-item:hover { box-shadow:0 4px 20px rgba(66,133,244,.08); }
+.s-title { font-weight:700; font-size:14px; margin-bottom:6px; }
+.s-desc { font-size:13px; color:var(--muted); line-height:1.65; }
+
+/* ══ STACK ══════════════════════════════════════════════════ */
+.stack-groups { display:grid; grid-template-columns:repeat(2,1fr); gap:32px; }
+.sg-label { font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+.pills { display:flex; flex-wrap:wrap; gap:8px; }
+.pill { font-size:12.5px; padding:7px 14px; border:1px solid var(--border); border-radius:6px; color:var(--ink2); background:var(--white); transition:all .2s; }
+.pill:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-lt); }
+.pill.hot { background:var(--blue-lt); border-color:var(--blue); color:var(--blue); font-weight:600; }
+
+/* ══ CONTACT ══════════════════════════════════════════════ */
+.contact-inner { max-width:560px; }
+.contact-title { font-size:clamp(28px,4vw,48px); font-weight:800; color:var(--white); letter-spacing:-0.03em; line-height:1.2; margin-bottom:12px; }
+.contact-title span { color:var(--blue); }
+.contact-sub { font-size:14px; color:rgba(255,255,255,0.45); margin-bottom:36px; }
+.contact-row { display:flex; gap:16px; flex-wrap:wrap; }
+.contact-link { display:inline-flex; align-items:center; gap:8px; padding:13px 24px; border:1.5px solid rgba(255,255,255,.15); border-radius:8px; color:rgba(255,255,255,.75); text-decoration:none; font-size:13px; font-weight:500; transition:all .2s; }
+.contact-link:hover { border-color:var(--blue); color:#fff; background:rgba(66,133,244,.15); }
+
+/* ══ MODAL ══════════════════════════════════════════════════ */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(4px); z-index:1000; display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition:opacity .25s; }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal { background:var(--white); border-radius:16px; max-width:720px; width:100%; max-height:85vh; overflow-y:auto; transform:translateY(24px) scale(.97); transition:transform .3s; position:relative; }
+.modal-overlay.open .modal { transform:none; }
+.modal-header { padding:36px 40px 24px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--white); border-radius:16px 16px 0 0; z-index:1; }
+.modal-tag { margin-bottom:10px; }
+.modal-title { font-size:22px; font-weight:800; letter-spacing:-0.03em; line-height:1.3; margin-bottom:6px; }
+.modal-sub { font-size:13px; color:var(--muted); }
+.modal-close { position:absolute; top:24px; right:24px; width:36px; height:36px; border-radius:50%; background:var(--bg); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s; font-size:18px; color:var(--muted); }
+.modal-close:hover { background:var(--border); }
+.modal-body { padding:32px 40px 40px; }
+.modal-result-banner { background:var(--blue-lt); border-radius:10px; padding:20px 24px; display:flex; gap:32px; flex-wrap:wrap; margin-bottom:32px; }
+.mbr-num { font-size:32px; font-weight:800; color:var(--blue); letter-spacing:-0.03em; line-height:1; }
+.mbr-label { font-size:12px; color:var(--blue-dk); margin-top:3px; }
+.modal-section { margin-bottom:28px; }
+.ms-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--blue); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--blue-lt); }
+.ms-text { font-size:14px; color:var(--ink2); line-height:1.8; }
+.ms-text p { margin-bottom:10px; }
+.ms-text p:last-child { margin-bottom:0; }
+.ms-text strong { font-weight:700; color:var(--ink); }
+.ms-ba { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+.ba-box { padding:14px 16px; border-radius:8px; }
+.ba-box.before { background:#FFF5F5; border:1px solid #FFDDDD; }
+.ba-box.after  { background:var(--blue-lt); border:1px solid #C5D8FC; }
+.ba-label { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; }
+.ba-box.before .ba-label { color:#CC3333; }
+.ba-box.after  .ba-label { color:var(--blue); }
+.ba-text { font-size:13px; line-height:1.65; color:var(--ink2); }
+.insight-list { list-style:none; }
+.insight-list li { padding:10px 0 10px 16px; border-bottom:1px solid var(--bg); font-size:13.5px; color:var(--ink2); line-height:1.7; position:relative; }
+.insight-list li::before { content:''; position:absolute; left:0; top:18px; width:5px; height:5px; border-radius:50%; background:var(--blue); }
+.insight-list li:last-child { border-bottom:none; }
+.highlight-box { background:var(--ink); border-radius:8px; padding:18px 20px; margin-top:16px; }
+.hb-text { font-size:13.5px; color:rgba(255,255,255,.85); line-height:1.7; font-style:italic; }
+.img-placeholder { background:var(--bg); border:2px dashed var(--border); border-radius:8px; padding:20px; text-align:center; margin-top:12px; color:var(--muted); font-size:12px; line-height:1.6; }
+.img-placeholder strong { color:var(--ink2); display:block; margin-bottom:4px; }
+
+/* ══ REVEAL ══════════════════════════════════════════════════ */
+.reveal { opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity:1; transform:none; }
+.d1{transition-delay:.08s} .d2{transition-delay:.16s} .d3{transition-delay:.24s}
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-thumb{background:var(--blue);border-radius:2px}
+
+@media(max-width:900px){
+  nav{padding:0 24px} .nav-links{display:none}
+  .section-wrap{padding:72px 24px}
+  .about-grid{grid-template-columns:1fr;gap:40px}
+  .cases-grid{grid-template-columns:1fr}
+  .stack-groups{grid-template-columns:1fr}
+  .ms-ba{grid-template-columns:1fr}
+  .modal-body{padding:24px} .modal-header{padding:24px 24px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-name">정지안<span>.</span></div>
+  <div class="nav-links">
+    <a href="#cases">케이스</a>
+    <a href="#about">소개</a>
+    <a href="#stack">스택</a>
+    <a href="#contact">연락</a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════════════════════════ -->
+<!-- ══ HERO 1: FULLSCREEN TYPO ══════════════════════════════ -->
+<section id="hero-typo">
+  <div class="typo-eyebrow">Performance Marketing Lead · 5yr</div>
+  <h1 class="typo-headline">
+    <span class="break">기억에 남는 마케팅과</span>
+    <span class="break"><span class="accent">지갑을 여는 마케팅</span>은</span>
+    <span class="break">다르다.</span>
+  </h1>
+  <p class="typo-sub">
+    <strong>전환이 안 되는 건 다 이유가 있다</strong> — 저는 그 이유를 쫓습니다.<br>
+    월 5억 예산 · 30인 조직 · 뷰티·헬스케어·글로벌
+  </p>
+  <div class="typo-stats">
+    <div class="typo-stat"><div class="typo-stat-num">5억<span>+</span></div><div class="typo-stat-label">월 최대 광고 예산</div></div>
+    <div class="typo-stat"><div class="typo-stat-num">30<span>명</span></div><div class="typo-stat-label">직접 관리 팀 규모</div></div>
+    <div class="typo-stat"><div class="typo-stat-num">5<span>yr</span></div><div class="typo-stat-label">퍼포먼스 마케팅</div></div>
+    <div class="typo-stat"><div class="typo-stat-num">4<span>개</span></div><div class="typo-stat-label">글로벌 시장</div></div>
+  </div>
+  <div class="scroll-hint">
+    <span>scroll</span>
+    <div class="scroll-hint-arrow">↓</div>
+  </div>
+</section>
+
+<!-- ══ HERO 2: iMESSAGE ═══════════════════════════════════════ -->
+<section id="hero-imsg">
+  <div class="mac-window">
+    <div class="mac-titlebar">
+      <div class="mac-dots">
+        <div class="mac-dot red"></div>
+        <div class="mac-dot yellow"></div>
+        <div class="mac-dot green"></div>
+      </div>
+      <div class="mac-title-info">
+        <div class="mac-contact-name">정지안</div>
+        <div class="mac-contact-sub">나에게</div>
+      </div>
+      <div class="mac-avatar">
+        <img src="jian_photo.png" alt="정지안" onerror="this.style.display='none';this.parentNode.innerText='JJ'">
+      </div>
+    </div>
+    <div class="chat-area" id="chatArea">
+      <div class="chat-date">오늘 오전 9:41</div>
+      <div class="bubble-row typing-row" id="typing"><div class="typing-bubble"><div class="dot-b"></div><div class="dot-b"></div><div class="dot-b"></div></div></div>
+      <div class="bubble-row" id="b1" style="display:none"><div class="bubble">저의 마케팅은 물음표에서 시작합니다.</div></div>
+      <div class="bubble-row" id="b2" style="display:none"><div class="bubble">이거 아닐까? 저거 아닐까?<br>이렇게 해 볼까? 저건 어떨까?</div></div>
+      <div class="bubble-row" id="b3" style="display:none"><div class="bubble">정답을 확신하는 게 아니라<br>정답을 찾기 위한 단서를 쫓는 것,</div></div>
+      <div class="bubble-row" id="b4" style="display:none"><div class="bubble">매출이 안 나오는 데에는 이유가 있습니다.</div></div>
+      <div class="bubble-row" id="b5" style="display:none"><div class="bubble">저는 그 이유를 쫓습니다.</div></div>
+    </div>
+    <div class="chat-input-bar">
+      <div class="chat-input-fake">메시지</div>
+      <button class="chat-send-btn"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg></button>
+    </div>
+  </div>
+  <div class="imsg-scroll-hint" id="imsgHint">
+    <span>scroll</span>
+    <div class="ish-arrow">↓</div>
+  </div>
+</section>
+
+<!-- ══ CASES ══════════════════════════════════════════════════ -->
+<div id="cases" class="section-wrap bg-gray">
+  <div class="section-top reveal">
+    <div class="section-kicker">01 · Cases</div>
+    <h2 class="section-title">과정으로 증명한 6개의 케이스</h2>
+    <p class="section-desc">카드를 클릭하면 전체 과정을 볼 수 있어요</p>
+  </div>
+  <div class="cases-grid">
+    <div class="case-card reveal" onclick="openModal('m1')">
+      <span class="case-num">01</span>
+      <div class="case-tag t-beauty">뷰티 플랫폼</div>
+      <div class="case-title">강남언니 페이지 리빌딩</div>
+      <div class="case-sub">설득 구조를 바꿔 전환을 만든 과정 — 20-30대 여성 타겟</div>
+      <div class="case-result">+400%</div>
+      <div class="case-result-sub">월 상담 문의 8건 → 40건</div>
+      <div class="case-more">자세히 보기 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="case-card reveal d1" onclick="openModal('m2')">
+      <span class="case-num">02</span>
+      <div class="case-tag t-data">데이터 정교화</div>
+      <div class="case-title">머신러닝 학습 구조 교정</div>
+      <div class="case-sub">트래픽이 아니라 학습 데이터 문제로 재정의한 과정</div>
+      <div class="case-result">×2</div>
+      <div class="case-result-sub">리드 볼륨 2배 · 체류시간 회복</div>
+      <div class="case-more">자세히 보기 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="case-card reveal d2" onclick="openModal('m3')">
+      <span class="case-num">03</span>
+      <div class="case-tag t-infra">운영 구조</div>
+      <div class="case-title">KPI 재정의 & 자동화 구축</div>
+      <div class="case-sub">성과를 정의하고 관리하는 구조를 설계한 과정</div>
+      <div class="case-result">0건</div>
+      <div class="case-result-sub">KPI 충돌 완전 해소</div>
+      <div class="case-more">자세히 보기 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="case-card reveal" onclick="openModal('m4')">
+      <span class="case-num">04</span>
+      <div class="case-tag t-org">조직 설계</div>
+      <div class="case-title">30인 조직 자생력 구축</div>
+      <div class="case-sub">사람이 아니라 성과 재현 구조를 만든 과정</div>
+      <div class="case-result">×3</div>
+      <div class="case-result-sub">하단 퍼널 전환율 10%→30%</div>
+      <div class="case-more">자세히 보기 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="case-card reveal d1" onclick="openModal('m5')">
+      <span class="case-num">05</span>
+      <div class="case-tag t-data">데이터 분석</div>
+      <div class="case-title">랜딩 전환 구조 재설계</div>
+      <div class="case-sub">GA4 퍼널 분석으로 CTA 병목을 발견하고 제거한 과정</div>
+      <div class="case-result">+220%</div>
+      <div class="case-result-sub">CTA 클릭 25건 → 56건</div>
+      <div class="case-more">자세히 보기 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="case-card reveal d2" onclick="openModal('m6')">
+      <span class="case-num">06</span>
+      <div class="case-tag t-create">크리에이티브</div>
+      <div class="case-title">TikTok 크리에이티브 전환</div>
+      <div class="case-sub">포맷·카피를 바꿔 CPA를 절반으로 줄인 과정</div>
+      <div class="case-result">-55%</div>
+      <div class="case-result-sub">CPA 절감 · 볼륨 100% 유지</div>
+      <div class="case-more">자세히 보기 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ABOUT ══════════════════════════════════════════════════ -->
+<div id="about" class="section-wrap">
+  <div class="about-grid">
+    <div>
+      <div class="section-top reveal">
+        <div class="section-kicker">02 · About</div>
+        <h2 class="section-title">대행사에서<br>브랜드를 내 것처럼</h2>
+      </div>
+      <p class="about-body reveal">5년간 헬스케어·뷰티 버티컬에서 퍼포먼스 마케팅을 해왔어요. 광고 세팅이 아니라 퍼널 구조와 데이터 문제로 접근했고, 클라이언트의 브랜드를 항상 내 것처럼 운영했어요.</p>
+      <p class="about-body reveal">이제 진짜 인하우스에서 하나의 브랜드를 깊게 키우고 싶어요. 코덕이자 20-30대 여성 타겟 당사자로서 뷰티 카테고리의 소비 심리를 데이터와 직관 둘 다로 읽어요.</p>
+      <div class="career-list">
+        <div class="career-item reveal"><div class="c-dot"></div><div><div class="c-co">네오커스</div><div class="c-role">퍼포먼스 & 국내팀 총괄 · 일본·북미·대만 글로벌</div><div class="c-period">2025.12 – 현재</div></div></div>
+        <div class="career-item reveal d1"><div class="c-dot dim"></div><div><div class="c-co">브랜딩라이즈</div><div class="c-role">퍼포먼스 마케터 · 법률·병원·소비재·화장품</div><div class="c-period">2025.09 – 2025.12</div></div></div>
+        <div class="career-item reveal d2"><div class="c-dot dim"></div><div><div class="c-co">이지엠앤씨</div><div class="c-role">마케팅 팀장 → 부서장 · MSO 6개 지점 총괄</div><div class="c-period">2021.03 – 2025.08</div></div></div>
+      </div>
+    </div>
+    <div class="strength-list">
+      <div class="strength-item reveal"><div class="s-title">구조 기반 퍼포먼스</div><div class="s-desc">광고 세팅보다 먼저 데이터를 읽고 전환이 막히는 구간을 찾아 구조를 바꿔요. GA4·GTM을 직접 다루며 퍼널 전체를 설계해요.</div></div>
+      <div class="strength-item reveal d1"><div class="s-title">타겟 페르소나 인사이트</div><div class="s-desc">코덕이자 20-30대 여성 타겟 당사자로서 뷰티 카테고리의 소비 심리와 크리에이티브 방향을 데이터와 직관 둘 다로 읽어요.</div></div>
+      <div class="strength-item reveal d2"><div class="s-title">데이터 파이프라인 & 자동화</div><div class="s-desc">Google Apps Script로 마케팅 대시보드를 직접 구축하고, 예산 자동 분류 시스템을 설계해 담당자 부재 시에도 운영 가능한 구조를 만들어요.</div></div>
+      <div class="strength-item reveal d3"><div class="s-title">조직 리더십</div><div class="s-desc">30인 조직에서 온보딩·교육 체계를 설계하고 1년간 퇴사율 3% 이하로 유지했어요. 사람이 아니라 구조로 성과를 재현해요.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STACK ══════════════════════════════════════════════════ -->
+<div id="stack" class="section-wrap bg-gray">
+  <div class="section-top reveal">
+    <div class="section-kicker">03 · Stack</div>
+    <h2 class="section-title">직접 쓰는 도구들</h2>
+  </div>
+  <div class="stack-groups">
+    <div class="stack-group reveal"><div class="sg-label">광고 매체</div><div class="pills"><span class="pill hot">Meta Ads</span><span class="pill hot">Google Ads</span><span class="pill hot">TikTok Ads</span><span class="pill hot">GA4</span><span class="pill hot">GTM</span><span class="pill">Taboola</span><span class="pill">Kakao</span><span class="pill">Naver SA</span><span class="pill">Toss</span><span class="pill">당근마켓</span></div></div>
+    <div class="stack-group reveal d1"><div class="sg-label">자동화 & 분석</div><div class="pills"><span class="pill hot">Google Apps Script</span><span class="pill">Zapier</span><span class="pill">Make.com</span></div></div>
+    <div class="stack-group reveal d2"><div class="sg-label">디자인 & 콘텐츠</div><div class="pills"><span class="pill">Photoshop</span><span class="pill">Illustrator</span><span class="pill">Premiere Pro</span><span class="pill">CapCut</span><span class="pill">Figma</span></div></div>
+    <div class="stack-group reveal d3"><div class="sg-label">자격증</div><div class="pills"><span class="pill">검색광고 마케터 1급</span><span class="pill">SNS 광고 마케터 1급</span><span class="pill">Google Analytics GAIQ</span></div></div>
+  </div>
+</div>
+
+<!-- ══ CONTACT ══════════════════════════════════════════════ -->
+<div id="contact" class="section-wrap bg-dark">
+  <div class="contact-inner reveal">
+    <div class="section-kicker" style="color:rgba(255,255,255,0.4);margin-bottom:14px;">04 · Contact</div>
+    <div class="contact-title">함께 키울<br><span>브랜드</span>를 찾고 있어요</div>
+    <p class="contact-sub">뷰티 인하우스 퍼포먼스 마케터 포지션에 관심 있습니다</p>
+    <div class="contact-row">
+      <a href="mailto:galaxia053@naver.com" class="contact-link">✉ galaxia053@naver.com</a>
+      <a href="tel:010-2318-8323" class="contact-link">✆ 010-2318-8323</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="m1" onclick="closeOnBg(event,this)">
+ <div class="modal">
+  <div class="modal-header">
+    <div class="modal-tag"><span class="case-tag t-beauty">뷰티 플랫폼</span></div>
+    <div class="modal-title">강남언니 페이지 리빌딩</div>
+    <div class="modal-sub">20-30대 여성 타겟 · 설득 구조를 바꿔 전환을 만든 과정</div>
+    <button class="modal-close" onclick="closeModal('m1')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="modal-result-banner">
+      <div class="mbr-item"><div class="mbr-num">+400%</div><div class="mbr-label">상담 문의 증가</div></div>
+      <div class="mbr-item"><div class="mbr-num">8 → 40건</div><div class="mbr-label">월 상담 문의</div></div>
+      <div class="mbr-item"><div class="mbr-num">주 13건</div><div class="mbr-label">평균 상담 발생</div></div>
+    </div>
+    <div class="modal-section"><div class="ms-label">문제 인식</div><div class="ms-text"><p>강남언니에서 동일 시술을 운영하는 인근 병원들은 상담 신청이 100건 이상 발생하는 반면, 우리 병원은 월 6~8건 수준에 머물렀어요. 트래픽은 일정 수준 유지됐는데도 전환만 비정상적으로 낮은 구조가 지속됐어요.</p><p><strong>기존에는 광고비/노출 중심으로 성과를 해석했지만, 저는 '같은 노출 대비 전환 차이'에 집중했어요.</strong></p></div><div class="img-placeholder"><strong>📸 이미지 추가 가능</strong>강남언니 페이지 before 스크린샷, 경쟁사 비교 화면</div></div>
+    <div class="modal-section"><div class="ms-label">가설 & 초기 실패</div><div class="ms-text"><p>강남언니 유저는 이미 시술을 고려 중인 고관여 타겟이므로 정보보다 "결과(효과)" 중심 설득이 선행되어야 전환이 발생한다고 가설을 세웠어요. 초기 1~2주 수정 후 유의미한 변화가 없자, <strong>"노출-클릭-설득 구조 전체 문제"로 재정의</strong>했어요.</p></div></div>
+    <div class="modal-section"><div class="ms-label">Before → After</div><div class="ms-ba"><div class="ba-box before"><div class="ba-label">Before</div><div class="ba-text">뺏주사 (병원 중심 네이밍)<br>비키니 기반 과거형 이미지<br>시술 설명 중심 구조<br>설명 → 설득 흐름</div></div><div class="ba-box after"><div class="ba-label">After</div><div class="ba-text">지방분해주사 (유저 검색 중심)<br>건강미·베이지·오렌지 트렌드<br>효과 이미지 → 공감 → 설명<br>설득 → 설명 흐름</div></div></div><div class="img-placeholder"><strong>📸 이미지 추가 가능</strong>Before/After 페이지 비교, 썸네일 교체 전후</div></div>
+    <div class="modal-section"><div class="ms-label">인사이트</div><ul class="insight-list"><li>광고는 클릭을 만드는 게 아니라 '설득을 시작하는 단계'다 — 썸네일부터 전환 설계가 시작되어야 한다</li><li>고관여 서비스는 정보보다 결과를 먼저 보여야 한다 — '이해'보다 '확신'이 먼저다</li><li>트렌드 = 성과 변수 — 디자인/비주얼도 퍼포먼스 요소로 관리해야 한다</li></ul></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal-overlay" id="m2" onclick="closeOnBg(event,this)">
+ <div class="modal">
+  <div class="modal-header"><div class="modal-tag"><span class="case-tag t-data">데이터 정교화</span></div><div class="modal-title">머신러닝 학습 구조 교정</div><div class="modal-sub">트래픽이 아니라 학습 데이터 문제로 재정의한 과정 · 대만 Meta 광고</div><button class="modal-close" onclick="closeModal('m2')">✕</button></div>
+  <div class="modal-body">
+    <div class="modal-result-banner"><div class="mbr-item"><div class="mbr-num">×2</div><div class="mbr-label">리드 볼륨</div></div><div class="mbr-item"><div class="mbr-num">0:36→1:46</div><div class="mbr-label">체류시간 회복</div></div></div>
+    <div class="modal-section"><div class="ms-label">문제 재정의</div><div class="ms-text"><p>트래픽은 급증했지만 문의가 거의 없는 비정상 구조가 발생했어요. <strong>단순히 광고 성과가 아니라, 머신러닝이 어떤 데이터를 학습하고 있는지를 기준으로 문제를 재정의했어요.</strong> 저관여 이탈 유저가 전환 신호로 학습되어 알고리즘이 왜곡된 상태였어요.</p></div></div>
+    <div class="modal-section"><div class="ms-label">Before → After</div><div class="ms-ba"><div class="ba-box before"><div class="ba-label">기존</div><div class="ba-text">단순 클릭/방문 기준 전환<br>전체 유입 기반 맞춤 타겟<br>저관여 포함 학습 데이터</div></div><div class="ba-box after"><div class="ba-label">변경</div><div class="ba-text">스크롤 25% + 체류시간 조건<br>고관여 유저만 맞춤 타겟<br>유사 타겟(LAL) 단계적 확장</div></div></div><div class="img-placeholder"><strong>📸 이미지 추가 가능</strong>GTM 이벤트 설정, Meta 맞춤 타겟 설정, 체류시간 그래프</div></div>
+    <div class="modal-section"><div class="ms-label">인사이트</div><ul class="insight-list"><li>트래픽은 성과가 아니라 '재료'다 — 질이 낮은 트래픽은 머신러닝을 망가뜨린다</li><li>전환 이벤트는 '행동'이 아니라 '의도' 기준으로 설계해야 한다</li><li>머신러닝은 자동이 아니라 '방향 설정'이다</li></ul></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal-overlay" id="m3" onclick="closeOnBg(event,this)">
+ <div class="modal">
+  <div class="modal-header"><div class="modal-tag"><span class="case-tag t-infra">운영 구조</span></div><div class="modal-title">KPI 재정의 & 자동화 구축</div><div class="modal-sub">성과를 정의하고 관리하는 구조를 설계한 과정</div><button class="modal-close" onclick="closeModal('m3')">✕</button></div>
+  <div class="modal-body">
+    <div class="modal-result-banner"><div class="mbr-item"><div class="mbr-num">0건</div><div class="mbr-label">KPI 충돌 해소</div></div><div class="mbr-item"><div class="mbr-num">자동화</div><div class="mbr-label">담당자 부재 시 운영 가능</div></div></div>
+    <div class="modal-section"><div class="ms-label">문제 재정의</div><div class="ms-text"><p><strong>문제는 광고 성과가 아니라, 성과를 판단하는 기준과 구조가 없다는 것이었어요.</strong> 광고 클릭은 발생하지만 실제 메신저 문의와 연결되지 않았고 CS 이후 행동도 확인이 불가능했어요.</p></div></div>
+    <div class="modal-section"><div class="ms-label">Before → After</div><div class="ms-ba"><div class="ba-box before"><div class="ba-label">기존</div><div class="ba-text">KPI: CTR 중심<br>CS 데이터 미연동<br>담당자 의존 운영</div></div><div class="ba-box after"><div class="ba-label">변경</div><div class="ba-text">KPI: 진입률 (메신저 도달)<br>광고+CS 통합 대시보드<br>Scale/Fix/Hold 자동 분류</div></div></div><div class="img-placeholder"><strong>📸 이미지 추가 가능</strong>Google Sheets 대시보드, 예산 자동 분류 시스템</div></div>
+    <div class="modal-section"><div class="ms-label">인사이트</div><ul class="insight-list"><li>광고 성과는 클릭이 아니라 '진입 이후'에서 결정된다</li><li>메신저도 랜딩이다 — 설득은 그 이후에도 계속된다</li></ul><div class="highlight-box"><div class="hb-text">"광고 KPI를 광고 안에서 끝내지 않고, 다음 행동까지 KPI로 끌고 내려왔다"</div></div></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal-overlay" id="m4" onclick="closeOnBg(event,this)">
+ <div class="modal">
+  <div class="modal-header"><div class="modal-tag"><span class="case-tag t-org">조직 설계</span></div><div class="modal-title">30인 조직 자생력 구축</div><div class="modal-sub">사람이 아니라 성과 재현 구조를 만든 과정</div><button class="modal-close" onclick="closeModal('m4')">✕</button></div>
+  <div class="modal-body">
+    <div class="modal-result-banner"><div class="mbr-item"><div class="mbr-num">×3</div><div class="mbr-label">하단 퍼널 전환율</div></div><div class="mbr-item"><div class="mbr-num">10%→30%</div><div class="mbr-label">내원율 개선</div></div><div class="mbr-item"><div class="mbr-num">1명</div><div class="mbr-label">1년간 퇴사자</div></div></div>
+    <div class="modal-section"><div class="ms-label">문제 재정의</div><div class="ms-text"><p><strong>문제는 인력이 아니라 "성과를 재현할 수 없는 구조"였어요.</strong> 동일한 광고를 운영해도 담당자에 따라 결과 차이가 발생했고 교육 체계가 없었어요.</p></div></div>
+    <div class="modal-section"><div class="ms-label">핵심 전략</div><div class="ms-text"><p><strong>1. 직무 표준화</strong> — 광고 운영/분석/보고 기준 정리, 누구나 동일 기준으로 판단 가능하도록 구조화했어요.</p><p><strong>2. 온보딩 시스템 구축</strong> — 단계별 학습 + 실무 연결 구조를 직접 설계했어요.</p><p><strong>3. 주간 리뷰 & 1:1 피드백</strong> — 감이 아니라 데이터 기반 피드백 구조를 만들었어요.</p><p><strong>4. 마케팅 ↔ CS 협업 구조 개선</strong> — 부서 간 병목 구간을 제거했어요.</p></div><div class="img-placeholder"><strong>📸 이미지 추가 가능</strong>온보딩 커리큘럼 문서, 워크샵 사진</div></div>
+    <div class="modal-section"><div class="ms-label">인사이트</div><ul class="insight-list"><li>성과는 개인이 아니라 구조에서 나온다</li><li>좋은 마케터보다 재현 가능한 시스템이 더 중요하다</li></ul><div class="highlight-box"><div class="hb-text">"사람을 키운 게 아니라, 성과가 나오는 구조를 만든 사람"</div></div></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal-overlay" id="m5" onclick="closeOnBg(event,this)">
+ <div class="modal">
+  <div class="modal-header"><div class="modal-tag"><span class="case-tag t-data">데이터 분석</span></div><div class="modal-title">랜딩 전환 구조 재설계</div><div class="modal-sub">GA4 퍼널 분석으로 CTA 병목을 발견하고 제거한 과정</div><button class="modal-close" onclick="closeModal('m5')">✕</button></div>
+  <div class="modal-body">
+    <div class="modal-result-banner"><div class="mbr-item"><div class="mbr-num">+220%</div><div class="mbr-label">CTA 클릭 증가</div></div><div class="mbr-item"><div class="mbr-num">25→56건</div><div class="mbr-label">스크롤 25% 구간</div></div></div>
+    <div class="modal-section"><div class="ms-label">문제 & 액션</div><div class="ms-text"><p>GA4 경로 탐색 결과 스크롤 25% 구간에서 CTA 인지 병목이 발견됐어요.</p></div><div class="ms-ba"><div class="ba-box before"><div class="ba-label">Before</div><div class="ba-text">CTA 버튼이 배경색에 묻힘<br>모바일 최적화 미적용<br>국가별 진입 경로 미구분</div></div><div class="ba-box after"><div class="ba-label">After</div><div class="ba-text">버튼 시각 대비 강화<br>모바일 CTA 위치 재배치<br>국가별 주요 SNS 최상단 배치</div></div></div><div class="img-placeholder"><strong>📸 이미지 추가 가능</strong>GA4 경로 탐색 스크린샷, Before/After 랜딩 비교</div></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal-overlay" id="m6" onclick="closeOnBg(event,this)">
+ <div class="modal">
+  <div class="modal-header"><div class="modal-tag"><span class="case-tag t-create">크리에이티브</span></div><div class="modal-title">TikTok 크리에이티브 전환</div><div class="modal-sub">포맷·카피를 바꿔 CPA를 절반으로 줄인 과정</div><button class="modal-close" onclick="closeModal('m6')">✕</button></div>
+  <div class="modal-body">
+    <div class="modal-result-banner"><div class="mbr-item"><div class="mbr-num">-55%</div><div class="mbr-label">CPA 절감</div></div><div class="mbr-item"><div class="mbr-num">100%</div><div class="mbr-label">볼륨 유지</div></div></div>
+    <div class="modal-section"><div class="ms-label">Before → After</div><div class="ms-ba"><div class="ba-box before"><div class="ba-label">Before</div><div class="ba-text">정적 이미지 소재<br>"다이어트 양약" (시술명 중심)<br>기능적 정보 전달</div></div><div class="ba-box after"><div class="ba-label">After</div><div class="ba-text">음원+더빙 결합 숏폼 영상<br>"[부산] 급하게 살 뺄 분 찾습니다"<br>타겟 행동 촉구형 카피</div></div></div><div class="img-placeholder"><strong>📸 이미지 추가 가능</strong>Before/After 소재 썸네일, 월별 단가 그래프</div></div>
+    <div class="modal-section"><div class="ms-label">인사이트</div><ul class="insight-list"><li>TikTok에서는 정보 전달이 아니라 행동 유도가 먼저다</li><li>카피는 시술명이 아니라 타겟의 상황 언어로 써야 한다</li><li>숏폼 초반 3초는 광고가 아니라 콘텐츠처럼 시작해야 한다</li></ul></div>
+  </div>
+ </div>
+</div>
+
+<script>
+// ── Cursor
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{ mx=e.clientX; my=e.clientY; cur.style.transform=`translate(${mx-4}px,${my-4}px)`; });
+(function loop(){ rx+=(mx-rx)*0.1; ry+=(my-ry)*0.1; ring.style.transform=`translate(${rx-15}px,${ry-15}px)`; requestAnimationFrame(loop); })();
+document.querySelectorAll('a,button,.case-card').forEach(el=>{ el.addEventListener('mouseenter',()=>{ ring.style.width='44px'; ring.style.height='44px'; ring.style.opacity='0.7'; }); el.addEventListener('mouseleave',()=>{ ring.style.width='30px'; ring.style.height='30px'; ring.style.opacity='0.4'; }); });
+
+// ── Nav scroll
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>40));
+
+// ── Reveal on scroll
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);} }),{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ── iMessage animation (scroll-triggered)
+let imsgPlayed = false;
+
+const imsgObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !imsgPlayed) {
+      imsgPlayed = true;
+      playImsg();
+    }
+  });
+}, { threshold: 0.3 });
+
+const imsgSection = document.getElementById('hero-imsg');
+if (imsgSection) imsgObs.observe(imsgSection);
+
+function showBubble(id) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  row.style.display = 'flex';
+  requestAnimationFrame(() => {
+    const b = row.querySelector('.bubble');
+    if (b) setTimeout(() => b.classList.add('visible'), 30);
+  });
+}
+
+function playImsg() {
+  const typing = document.getElementById('typing');
+
+  // typing → b1
+  setTimeout(() => { typing.style.display = 'flex'; }, 300);
+  setTimeout(() => { typing.style.display = 'none'; showBubble('b1'); }, 1200);
+
+  // b2
+  setTimeout(() => { typing.style.display = 'flex'; }, 1800);
+  setTimeout(() => { typing.style.display = 'none'; showBubble('b2'); }, 2600);
+
+  // b3
+  setTimeout(() => { typing.style.display = 'flex'; }, 3100);
+  setTimeout(() => { typing.style.display = 'none'; showBubble('b3'); }, 4000);
+
+  // b4
+  setTimeout(() => { typing.style.display = 'flex'; }, 4500);
+  setTimeout(() => { typing.style.display = 'none'; showBubble('b4'); }, 5200);
+
+  // b5
+  setTimeout(() => { typing.style.display = 'flex'; }, 5600);
+  setTimeout(() => {
+    typing.style.display = 'none';
+    showBubble('b5');
+    // show scroll hint after last message
+    setTimeout(() => {
+      const hint = document.getElementById('imsgHint');
+      if (hint) hint.classList.add('show');
+    }, 800);
+  }, 6300);
+}
+
+// ── Modal
+function openModal(id){ document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+function closeOnBg(e,el){ if(e.target===el){el.classList.remove('open'); document.body.style.overflow='';} }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>{m.classList.remove('open');document.body.style.overflow='';}); });
+</script>
+</body>
+</html>
