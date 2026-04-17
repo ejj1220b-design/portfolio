@@ -410,7 +410,7 @@ nav.scrolled { border-color:var(--border); }
 .modal-body table { max-width:100%; }
 .modal-result-banner { display:flex; gap:24px; flex-wrap:wrap; margin-bottom:0; padding:20px 0 0; }
 .mbr-item { flex:1; min-width:80px; max-width:100%; }
-.mbr-num { font-size:36px; font-weight:800; color:var(--blue); letter-spacing:-0.04em; line-height:1; }
+.mbr-num { font-size:36px; font-weight:800; color:var(--blue); letter-spacing:-0.04em; line-height:1; word-break:break-all; }
 .mbr-label { font-size:13px; color:var(--muted); margin-top:6px; font-weight:500; }
 .modal-section { margin-bottom:28px; }
 .ms-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--blue); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--blue-lt); }
@@ -427,7 +427,7 @@ nav.scrolled { border-color:var(--border); }
 .ba-box.after  .ba-label { color:var(--blue); }
 .ba-text { font-size:13px; line-height:1.65; color:var(--ink2); }
 .insight-list { list-style:none; }
-.insight-list li { padding:10px 0 10px 16px; border-bottom:1px solid var(--bg); font-size:13.5px; color:var(--ink2); line-height:1.7; position:relative; }
+.insight-list li { padding:10px 0 10px 16px; border-bottom:1px solid var(--bg); font-size:13.5px; color:var(--ink2); line-height:1.7; position:relative; word-break:keep-all; }
 .insight-list li::before { content:''; position:absolute; left:0; top:18px; width:5px; height:5px; border-radius:50%; background:var(--blue); }
 .insight-list li:last-child { border-bottom:none; }
 .highlight-box { background:var(--ink); border-radius:8px; padding:18px 20px; margin-top:16px; }
@@ -785,7 +785,7 @@ nav.scrolled { border-color:var(--border); }
     <div class="modal-section"><div class="ms-label">기존 방식의 한계</div><div class="ms-text"><p>트래픽 + 전환 캠페인 병행 운영 / 동일 픽셀 이벤트 기반 학습<br>→ 저관여 클릭 유저까지 전환 신호로 학습되면서 머신러닝이 이탈 유저를 정상 유저로 인식. Meta 측에서도 "대만 트래픽은 소모성 클릭이 많다"는 답변을 받았다.<br>→ <strong>가짜 전환이 쌓이는 환경</strong></p></div></div>
     <div class="modal-section"><div class="ms-label">가설</div><div class="ms-text"><p>홈페이지 방문이 많다고 좋은 게 아니다. 문의가 들어오려면 고관여 유저가 유입되어야 하고, 머신러닝이 올바른 유저를 학습할 수 있는 환경을 먼저 만들어야 한다.<br>→ <strong>광고 성과가 아니라, 머신러닝이 어떤 데이터를 학습하고 있는지를 기준으로 문제를 재정의했다.</strong><br>→ 전환 기준을 '행동'이 아니라 <strong>'관여도'로 재설계</strong>해야 한다.</p></div></div>
     <div class="modal-section"><div class="ms-label">초기 대응과 재정의</div><div class="ms-text"><p>트래픽 광고 중단 후 전환 캠페인만 유지했지만 문의 개선 없음.<br>→ 단순 유입 조절이 아니라 <strong>학습 데이터 자체의 문제</strong>로 확정.</p></div></div>
-    <div class="modal-section"><div class="ms-label">핵심 수정</div><div class="ms-ba"><div class="ba-box before"><div class="ba-label">기존</div><div class="ba-text">단순 클릭/방문 기준 전환<br>전체 유입 기반 맞춤 타겟<br>저관여 포함 학습 데이터</div></div><div class="ba-box after"><div class="ba-label">변경</div><div class="ba-text">스크롤 25% + 체류시간 조건<br>고관여 유저만 맞춤 타겟<br>유사 타겟(LAL) 단계적 확장</div></div></div><div style="margin-top:12px;">
+    <div class="modal-section"><div class="ms-label">핵심 수정</div><div class="ms-ba"><div class="ba-box before"><div class="ba-label">기존</div><div class="ba-text">단순 클릭/방문 기준 전환<br>전체 유입 기반 맞춤 타겟<br>저관여 포함 학습 데이터</div></div><div class="ba-box after"><div class="ba-label">변경</div><div class="ba-text">스크롤 25% + 체류시간 조건<br>고관여 유저만 맞춤 타겟<br>유사 타겟(LAL) 단계적 확장</div></div></div><div style="margin-top:12px;overflow:hidden;max-width:100%;">
   <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;font-weight:600;">고관여 유사 타겟 설정</div>
   <img src="https://ejj1220b-design.github.io/portfolio/lookalike.webp" alt="lookalike target" style="width:60%;max-width:100%;border-radius:8px;display:block;margin:0 auto;">
   <div style="font-size:10px;color:var(--muted);margin:16px 0 4px;text-transform:uppercase;font-weight:600;">체류시간 회복 — Before / After</div>
